@@ -2,17 +2,12 @@ import { Context, Schema, Service, h } from 'koishi';
 import * as echarts from 'echarts';
 import { } from 'koishi-plugin-puppeteer';
 
-export const name = 'puppeteer-echarts';
-
-export interface Config { }
-
-export const Config: Schema<Config> = Schema.object({});
-
 export type EchartsOption = echarts.EChartsOption;
 
 export default class EchartsServer extends Service
 {
   static inject = ['puppeteer'];
+  static name = 'puppeteer-echarts';
 
   constructor(ctx: Context)
   {
