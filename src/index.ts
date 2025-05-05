@@ -10,12 +10,10 @@ export const Config: Schema<Config> = Schema.object({});
 
 export type EchartsOption = echarts.EChartsOption;
 
-export const inject = {
-  required: ['puppeteer'],
-};
-
 export default class EchartsServer extends Service
 {
+  static inject = ['puppeteer'];
+
   constructor(ctx: Context)
   {
     super(ctx, 'echarts');
