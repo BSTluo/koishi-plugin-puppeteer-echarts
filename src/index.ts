@@ -10,18 +10,23 @@ export const Config: Schema<Config> = Schema.object({});
 
 export type EchartsOption = echarts.EChartsOption;
 
+export const inject = {
+  required: ['puppeteer'],
+};
+
 export default class EchartsServer extends Service
 {
-  inject = ['puppeteer'];
+  inject: {
+    required: ['puppeteer'],
+  };
 
   constructor(ctx: Context)
   {
-
     super(ctx, 'echarts');
     this.ctx = ctx;
   }
 
-  async renderEchartsImage(width: number, height: number, option: echarts.EChartsOption)
+  async createChart(width: number, height: number, option: echarts.EChartsOption)
   {
     const htmlContent = `
   <!DOCTYPE html>
@@ -48,18 +53,20 @@ export default class EchartsServer extends Service
     </script>
   </body>
   </html>`;
+
+    const page = await this.ctx.puppeteer.page();
     try
     {
-      await this.ctx.puppeteer.start();
-      const page = await this.ctx.puppeteer.page();
+      // await this.ctx.puppeteer.start();
       await page.setViewport({ width, height });
       const over = await this.ctx.puppeteer.render(htmlContent);
+      await page.close();
 
-      await this.ctx.puppeteer.stop();
       return over;
     } catch (err)
     {
-      await this.ctx.puppeteer.stop();
+      await page.close();
+      console.log(err);
       return '图表渲染失败';
     }
 
