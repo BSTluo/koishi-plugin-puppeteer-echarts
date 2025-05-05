@@ -16,10 +16,6 @@ export const inject = {
 
 export default class EchartsServer extends Service
 {
-  inject: {
-    required: ['puppeteer'],
-  };
-
   constructor(ctx: Context)
   {
     super(ctx, 'echarts');
