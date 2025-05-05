@@ -8,6 +8,8 @@ export interface Config { }
 
 export const Config: Schema<Config> = Schema.object({});
 
+export type EchartsOption = echarts.EChartsOption;
+
 export default class EchartsServer extends Service
 {
   inject = ['puppeteer'];
