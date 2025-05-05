@@ -8,6 +8,8 @@ export default class EchartsServer extends Service
 {
   static inject = ['puppeteer'];
   static name = 'puppeteer-echarts';
+  static usage = `该插件开放一个ctx.echarts.createChart(width: number, height: number, option: echarts.EChartsOption)函数，返回是<img src="data:image/png;base64,xxx" />的字符串，width和height是图表的宽高，option是echarts的配置项。`;
+
 
   constructor(ctx: Context)
   {
