@@ -1,6 +1,7 @@
 import { Context, Schema, Service, h } from 'koishi';
 import * as echarts from 'echarts';
 import { } from 'koishi-plugin-puppeteer';
+import path from 'path';
 
 export type EchartsOption = echarts.EChartsOption;
 
@@ -10,35 +11,38 @@ export default class EchartsServer extends Service
   static name = 'puppeteer-echarts';
   static usage = `该插件开放一个ctx.echarts.createChart(width: number, height: number, option: echarts.EChartsOption)函数，返回是koishi的图片格式的字符串，width和height是图表的宽高，option是echarts的配置项。`;
 
+  echartsPath: string;
+
   constructor(ctx: Context)
   {
     super(ctx, 'echarts');
     this.ctx = ctx;
+
+    const rootDir = process.cwd();
+    const echartsPath = path.resolve(rootDir, './node_modules/echarts/dist/echarts.min.js');
+    this.echartsPath = echartsPath;
   }
 
   async createChart(width: number, height: number, option: echarts.EChartsOption)
   {
+
     const htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
       <style>
-        html, body, #chart {
+        html, body, #chart{
           margin: 0;
           padding: 0;
-          width: 100%;
-          height: 100%;
+          width: ${width}px;
+          height: ${height}px;
+          background: transparent;
         }
       </style>
     </head>
     <body>
       <div id="chart"></div>
-      <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-      <script>
-        const chart = echarts.init(document.getElementById('chart'));
-        chart.setOption(${JSON.stringify(option)});
-      </script>
     </body>
     </html>
   `;
@@ -47,10 +51,24 @@ export default class EchartsServer extends Service
     try
     {
       await page.setViewport({ width, height });
-      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      await page.setContent(htmlContent);
 
-      const chartElement = await page.$('#chart');
-      const imageBuffer = await chartElement.screenshot({ type: 'png' });
+      await page.addScriptTag({ path: this.echartsPath });
+
+      await page.evaluate((option) =>
+      {
+        const chart = echarts.init(document.getElementById('chart'));
+        chart.setOption(option);
+        chart.resize();
+      }, option);
+
+      await page.waitForFunction(() => {
+        const chartDiv = document.getElementById('chart');
+        return chartDiv && chartDiv.querySelector('canvas') !== null;
+      }, { timeout: 2000 });
+      
+
+      const imageBuffer = await page.screenshot({ type: 'png' });
 
       await page.close();
 
