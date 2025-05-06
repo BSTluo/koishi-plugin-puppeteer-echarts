@@ -20,40 +20,43 @@ export default class EchartsServer extends Service
   async createChart(width: number, height: number, option: echarts.EChartsOption)
   {
     const htmlContent = `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="UTF-8">
-    <style>
-      html, body, #main {
-        margin: 0;
-        padding: 0;
-        width: ${width}px;
-        height: ${height}px;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="main"></div>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-    <script>
-      const chart = echarts.init(document.getElementById('main'));
-      const option = ${JSON.stringify(option)};
-      chart.setOption(option);
-      window.chartRendered = true;
-    </script>
-  </body>
-  </html>`;
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        html, body, #chart {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          height: 100%;
+        }
+      </style>
+    </head>
+    <body>
+      <div id="chart"></div>
+      <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+      <script>
+        const chart = echarts.init(document.getElementById('chart'));
+        chart.setOption(${JSON.stringify(option)});
+      </script>
+    </body>
+    </html>
+  `;
 
     const page = await this.ctx.puppeteer.page();
     try
     {
-      // await this.ctx.puppeteer.start();
       await page.setViewport({ width, height });
-      const over = await this.ctx.puppeteer.render(htmlContent);
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+      const chartElement = await page.$('#chart');
+      const imageBuffer = await chartElement.screenshot({ type: 'png' });
+
       await page.close();
 
-      return over;
+      const base64 = imageBuffer.toString('base64');
+      return `<img src="data:image/png;base64,${base64}" />`;
     } catch (err)
     {
       await page.close();
